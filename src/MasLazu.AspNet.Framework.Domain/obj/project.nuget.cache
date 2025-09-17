@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "SWssKrQlBpI=",
+  "success": true,
+  "projectFilePath": "/home/mfaziz/projects/cs/MasLazu.AspNet/framework/src/MasLazu.AspNet.Framework.Domain/MasLazu.AspNet.Framework.Domain.csproj",
+  "expectedPackageFiles": [
+    "/home/mfaziz/.nuget/packages/microsoft.aspnetcore.app.ref/9.0.8/microsoft.aspnetcore.app.ref.9.0.8.nupkg.sha512"
+  ],
+  "logs": []
+}

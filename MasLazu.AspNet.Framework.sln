@@ -1,0 +1,55 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{87EA63AD-9592-4E90-84C0-4E8746E57B1B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MasLazu.AspNet.Framework.Application", "src\MasLazu.AspNet.Framework.Application\MasLazu.AspNet.Framework.Application.csproj", "{73A87351-6193-470B-9F31-7DC412C8C5DA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MasLazu.AspNet.Framework.Domain", "src\MasLazu.AspNet.Framework.Domain\MasLazu.AspNet.Framework.Domain.csproj", "{0C285905-D6A7-4807-A45A-31BC0357FA2D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MasLazu.AspNet.Framework.EfCore", "src\MasLazu.AspNet.Framework.EfCore\MasLazu.AspNet.Framework.EfCore.csproj", "{B07340DE-2D6C-41C1-B8F1-9D65625925A6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MasLazu.AspNet.Framework.EfCore.Postgresql", "src\MasLazu.AspNet.Framework.EfCore.Postgresql\MasLazu.AspNet.Framework.EfCore.Postgresql.csproj", "{75F4AB41-5665-468C-8688-7C688888FA5C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MasLazu.AspNet.Framework.Endpoint", "src\MasLazu.AspNet.Framework.Endpoint\MasLazu.AspNet.Framework.Endpoint.csproj", "{847FD3E6-2625-48F1-8C14-AF49F75EAD0C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{73A87351-6193-470B-9F31-7DC412C8C5DA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{73A87351-6193-470B-9F31-7DC412C8C5DA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{73A87351-6193-470B-9F31-7DC412C8C5DA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{73A87351-6193-470B-9F31-7DC412C8C5DA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0C285905-D6A7-4807-A45A-31BC0357FA2D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0C285905-D6A7-4807-A45A-31BC0357FA2D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0C285905-D6A7-4807-A45A-31BC0357FA2D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0C285905-D6A7-4807-A45A-31BC0357FA2D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B07340DE-2D6C-41C1-B8F1-9D65625925A6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B07340DE-2D6C-41C1-B8F1-9D65625925A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B07340DE-2D6C-41C1-B8F1-9D65625925A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B07340DE-2D6C-41C1-B8F1-9D65625925A6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{75F4AB41-5665-468C-8688-7C688888FA5C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{75F4AB41-5665-468C-8688-7C688888FA5C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{75F4AB41-5665-468C-8688-7C688888FA5C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{75F4AB41-5665-468C-8688-7C688888FA5C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{847FD3E6-2625-48F1-8C14-AF49F75EAD0C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{847FD3E6-2625-48F1-8C14-AF49F75EAD0C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{847FD3E6-2625-48F1-8C14-AF49F75EAD0C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{847FD3E6-2625-48F1-8C14-AF49F75EAD0C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{73A87351-6193-470B-9F31-7DC412C8C5DA} = {87EA63AD-9592-4E90-84C0-4E8746E57B1B}
+		{0C285905-D6A7-4807-A45A-31BC0357FA2D} = {87EA63AD-9592-4E90-84C0-4E8746E57B1B}
+		{B07340DE-2D6C-41C1-B8F1-9D65625925A6} = {87EA63AD-9592-4E90-84C0-4E8746E57B1B}
+		{75F4AB41-5665-468C-8688-7C688888FA5C} = {87EA63AD-9592-4E90-84C0-4E8746E57B1B}
+		{847FD3E6-2625-48F1-8C14-AF49F75EAD0C} = {87EA63AD-9592-4E90-84C0-4E8746E57B1B}
+	EndGlobalSection
+EndGlobal
