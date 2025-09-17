@@ -306,7 +306,27 @@ Integrated FluentValidation with automatic error response formatting.
 4. Add tests
 5. Submit a pull request
 
-## 📄 License
+## � CI/CD
+
+This project uses GitHub Actions for continuous integration and deployment:
+
+### Build and Test
+- **Trigger**: Push to `main`/`develop` branches and pull requests
+- **Actions**: Restore, build, test, and upload coverage reports
+- **Workflow**: `.github/workflows/build-test.yml`
+
+### NuGet Publishing
+- **Trigger**: GitHub release creation
+- **Actions**: Build, test, pack, and publish all packages to NuGet.org
+- **Workflow**: `.github/workflows/publish-nuget.yml`
+- **Setup**: See [NUGET_SETUP.md](NUGET_SETUP.md) for configuration instructions
+
+### Publishing a Release
+1. Create a new GitHub release with a semantic version tag (e.g., `v1.0.0`)
+2. The workflow automatically publishes all packages to NuGet
+3. Release notes are generated with installation instructions
+
+## �📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
