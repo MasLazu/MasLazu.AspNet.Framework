@@ -12,6 +12,7 @@ public static class FrameworkApplicationValidatorExtension
     public static IServiceCollection AddFrameworkApplicationValidators(this IServiceCollection services)
     {
         services.AddScoped(typeof(IPaginationValidator<>), typeof(PaginationRequestValidator<>));
+        services.AddScoped(typeof(ICursorPaginationValidator<>), typeof(CursorPaginationRequestValidator<>));
 
         return services;
     }

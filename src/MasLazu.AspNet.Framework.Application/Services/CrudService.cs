@@ -28,6 +28,7 @@ public abstract class CrudService<TEntity, TDto, TCreateRequest, TUpdateRequest>
     protected readonly IValidator<TCreateRequest>? CreateValidator;
     protected readonly IValidator<TUpdateRequest>? UpdateValidator;
     protected readonly IPaginationValidator<TEntity> PaginationValidator;
+    protected readonly ICursorPaginationValidator<TEntity> CursorPaginationValidator;
     protected readonly IEntityPropertyMap<TEntity> PropertyMap;
 
     protected CrudService(
@@ -36,6 +37,7 @@ public abstract class CrudService<TEntity, TDto, TCreateRequest, TUpdateRequest>
         IUnitOfWork unitOfWork,
         IEntityPropertyMap<TEntity> propertyMap,
         IPaginationValidator<TEntity> paginationValidator,
+        ICursorPaginationValidator<TEntity> cursorPaginationValidator,
         IValidator<TCreateRequest>? createValidator = null,
         IValidator<TUpdateRequest>? updateValidator = null)
     {
@@ -46,6 +48,7 @@ public abstract class CrudService<TEntity, TDto, TCreateRequest, TUpdateRequest>
         CreateValidator = createValidator;
         UpdateValidator = updateValidator;
         PaginationValidator = paginationValidator;
+        CursorPaginationValidator = cursorPaginationValidator;
     }
 
     protected virtual async Task ValidateAsync<T>(T request, IValidator<T>? validator, CancellationToken ct = default)
@@ -190,6 +193,17 @@ public abstract class CrudService<TEntity, TDto, TCreateRequest, TUpdateRequest>
             PageSize = request.PageSize,
             Page = request.Page,
             Items = entities.Adapt<List<TDto>>()
+        };
+    }
+
+    public async Task<CursorPaginatedResult<TDto>> GetCursorPaginatedAsync(Guid userId, CursorPaginationRequest request, CancellationToken ct = default)
+    {
+        await ValidateAsync(request, CursorPaginationValidator, ct);
+        (List<TEntity> entities, Guid? nextCursor) = await ReadRepository.GetCursorPaginatedAsync(request, ct);
+        return new CursorPaginatedResult<TDto>
+        {
+            Items = entities.Adapt<List<TDto>>(),
+            NextCursor = nextCursor?.ToString()
         };
     }
 }

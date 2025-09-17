@@ -111,4 +111,13 @@ public interface ICrudService<TDto, TCreateRequest, TUpdateRequest>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A <see cref="PaginatedResult{TDto}"/> containing items and paging metadata.</returns>
     Task<PaginatedResult<TDto>> GetPaginatedAsync(Guid userId, PaginationRequest request, CancellationToken ct = default);
+
+    /// <summary>
+    /// Gets a cursor-paginated result set of DTOs
+    /// </summary>
+    /// <param name="userId">User performing the operation (used for authorization/audit).</param>
+    /// <param name="request">Cursor pagination request (limit, cursor, filters, orderings).</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>A <see cref="CursorPaginatedResult{TDto}"/> containing items and cursor information.</returns>
+    Task<CursorPaginatedResult<TDto>> GetCursorPaginatedAsync(Guid userId, CursorPaginationRequest request, CancellationToken ct = default);
 }

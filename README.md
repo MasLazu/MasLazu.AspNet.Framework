@@ -9,11 +9,12 @@ A modern, clean architecture ASP.NET Core framework built with .NET 9, designed 
 - **Generic CRUD Operations**: Reusable CRUD services with built-in validation and mapping
 - **Entity Framework Core**: Full ORM support with PostgreSQL provider
 - **Soft Delete Support**: Automatic soft deletion with audit trails
-- **Pagination**: Both offset-based and cursor-based pagination
-- **Validation**: FluentValidation integration with custom error responses
+- **Pagination**: Both offset-based and cursor-based pagination with comprehensive validation
+- **Advanced Validation**: FluentValidation with field existence validation, operator compatibility, and custom error responses
 - **Dependency Injection**: Built-in DI container with service registration
 - **User Context**: Built-in user-based authorization and auditing
 - **Modern .NET**: Leverages .NET 9 features including nullable types and records
+- **Property Mapping**: Dynamic field validation for ordering and filtering operations
 
 ## 📁 Project Structure
 
@@ -25,15 +26,23 @@ src/
 │       └── BaseEntity.cs
 ├── MasLazu.AspNet.Framework.Application/
 │   ├── Interfaces/
+│   │   ├── ICursorPaginationValidator.cs
 │   │   ├── ICrudService.cs
+│   │   ├── IEntityPropertyMap.cs
+│   │   ├── IPaginationValidator.cs
 │   │   ├── IRepository.cs
 │   │   └── IReadRepository.cs
 │   ├── Models/
 │   │   ├── BaseDto.cs
+│   │   ├── CursorPaginationRequest.cs
+│   │   ├── CursorPaginatedResult.cs
 │   │   ├── PaginationRequest.cs
 │   │   └── PaginatedResult.cs
 │   ├── Services/
 │   │   └── CrudService.cs
+│   ├── Validators/
+│   │   ├── CursorPaginationRequestValidator.cs
+│   │   ├── PaginationRequestValidator.cs
 │   └── Utils/
 ├── MasLazu.AspNet.Framework.EfCore/
 │   ├── Configurations/
@@ -76,7 +85,9 @@ src/
 - Business logic and use cases
 - Generic `CrudService` for common operations
 - DTOs and request/response models
-- Validation and mapping logic
+- **Advanced validation** with field existence checking and operator compatibility
+- **Dual pagination support** with comprehensive request validation
+- **Property mapping** for dynamic field validation and ordering
 
 ### Infrastructure Layer
 
@@ -91,6 +102,72 @@ src/
 - Standardized response models
 - Endpoint groups for versioning
 - Middleware and cross-cutting concerns
+
+## 🔍 Advanced Features
+
+### Pagination & Validation
+
+The framework provides comprehensive pagination and validation capabilities:
+
+#### Offset-Based Pagination
+
+```csharp
+// Request
+{
+  "page": 1,
+  "pageSize": 20,
+  "filters": [
+    { "field": "name", "operator": "contains", "value": "test" }
+  ],
+  "orderBy": [
+    { "field": "createdAt", "desc": true }
+  ]
+}
+
+// Response
+{
+  "totalCount": 150,
+  "pageSize": 20,
+  "page": 1,
+  "items": [...]
+}
+```
+
+#### Cursor-Based Pagination
+
+```csharp
+// Request
+{
+  "limit": 20,
+  "cursor": "eyJpZCI6IjEyMyJ9", // Optional
+  "filters": [
+    { "field": "status", "operator": "=", "value": "active" }
+  ],
+  "orderBy": [
+    { "field": "id", "desc": false }
+  ]
+}
+
+// Response
+{
+  "items": [...],
+  "nextCursor": "eyJpZCI6IjE0MyJ9"
+}
+```
+
+#### Validation Features
+
+- **Field Existence**: Validates that filter/order fields exist and are available for operations
+- **Operator Compatibility**: Ensures operators are valid for field types
+- **Type Safety**: Validates data types match field types
+- **Custom Error Messages**: Clear, actionable error responses
+
+#### Supported Operators by Type
+
+- **String**: `=`, `!=`, `contains`, `startswith`, `endswith`
+- **Numeric/DateTime**: `=`, `!=`, `>`, `<`, `>=`, `<=`
+- **Boolean**: `=`, `!=`
+- **Enum/GUID**: `=`, `!=`
 
 ## 📦 Dependencies
 
@@ -197,10 +274,17 @@ public class ProductService : CrudService<Product, ProductDto, CreateProductRequ
         IUnitOfWork unitOfWork,
         IEntityPropertyMap<Product> propertyMap,
         IPaginationValidator<Product> paginationValidator,
+        ICursorPaginationValidator<Product> cursorPaginationValidator,
         IValidator<CreateProductRequest>? createValidator = null,
         IValidator<UpdateProductRequest>? updateValidator = null)
-        : base(repository, readRepository, unitOfWork, propertyMap, paginationValidator, createValidator, updateValidator)
+        : base(repository, readRepository, unitOfWork, propertyMap, paginationValidator, cursorPaginationValidator, createValidator, updateValidator)
     {
+    }
+
+    // Use cursor pagination for large datasets
+    public async Task<CursorPaginatedResult<ProductDto>> GetProductsCursorAsync(CursorPaginationRequest request)
+    {
+        return await GetCursorPaginatedAsync(Guid.Empty, request);
     }
 }
 ```
@@ -254,6 +338,7 @@ public class AppDbContext : BaseDbContext
 
 ```csharp
 using MasLazu.AspNet.Framework.Application.Interfaces;
+using MasLazu.AspNet.Framework.Application.Extensions;
 using MasLazu.AspNet.Framework.EfCore.Repositories;
 using MasLazu.AspNet.Framework.EfCore.Data;
 
@@ -261,6 +346,9 @@ builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<,>));
 builder.Services.AddScoped(typeof(IReadRepository<>), typeof(ReadRepository<,>));
 builder.Services.AddScoped<IUnitOfWork, SharedTransactionUnitOfWork>();
 builder.Services.AddScoped<AppDbContext>();
+
+// Add framework validators
+builder.Services.AddFrameworkApplicationValidators();
 ```
 
 ### FastEndpoints Configuration
@@ -292,11 +380,22 @@ The `CrudService` provides common CRUD operations that can be extended or overri
 
 ### Pagination
 
-Supports both traditional offset-based pagination and modern cursor-based pagination for better performance with large datasets.
+Supports both traditional **offset-based pagination** and modern **cursor-based pagination**:
+
+- **Offset Pagination**: Traditional page-based navigation with total count
+- **Cursor Pagination**: Token-based navigation for better performance with large datasets
+- **Field Validation**: Validates that sort and filter fields exist and are available for operations
+- **Operator Validation**: Ensures filter operators are compatible with field types
+- **Type Safety**: Runtime validation of field types and values
 
 ### Validation
 
-Integrated FluentValidation with automatic error response formatting.
+Integrated FluentValidation with advanced features:
+
+- **Field Existence**: Validates fields exist in the entity property map
+- **Operator Compatibility**: Checks operators against field types
+- **Custom Error Messages**: Clear, actionable validation errors
+- **Automatic DI**: Validators automatically registered via extension methods
 
 ## 🤝 Contributing
 
@@ -306,27 +405,7 @@ Integrated FluentValidation with automatic error response formatting.
 4. Add tests
 5. Submit a pull request
 
-## � CI/CD
-
-This project uses GitHub Actions for continuous integration and deployment:
-
-### Build and Test
-- **Trigger**: Push to `main`/`develop` branches and pull requests
-- **Actions**: Restore, build, test, and upload coverage reports
-- **Workflow**: `.github/workflows/build-test.yml`
-
-### NuGet Publishing
-- **Trigger**: GitHub release creation
-- **Actions**: Build, test, pack, and publish all packages to NuGet.org
-- **Workflow**: `.github/workflows/publish-nuget.yml`
-- **Setup**: See [NUGET_SETUP.md](NUGET_SETUP.md) for configuration instructions
-
-### Publishing a Release
-1. Create a new GitHub release with a semantic version tag (e.g., `v1.0.0`)
-2. The workflow automatically publishes all packages to NuGet
-3. Release notes are generated with installation instructions
-
-## �📄 License
+## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 

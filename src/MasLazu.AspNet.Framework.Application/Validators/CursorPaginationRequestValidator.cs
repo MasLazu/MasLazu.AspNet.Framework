@@ -7,16 +7,17 @@ using System.Collections.Generic;
 
 namespace MasLazu.AspNet.Framework.Application.Validators;
 
-public class PaginationRequestValidator<TEntity> : AbstractValidator<PaginationRequest<TEntity>>, IPaginationValidator<TEntity>
+public class CursorPaginationRequestValidator<TEntity> : AbstractValidator<CursorPaginationRequest>, ICursorPaginationValidator<TEntity>
     where TEntity : BaseEntity
 {
-    public PaginationRequestValidator(IEntityPropertyMap<TEntity> propertyMap)
+    public CursorPaginationRequestValidator(IEntityPropertyMap<TEntity> propertyMap)
     {
-        RuleFor(r => r.Page)
-            .GreaterThan(0);
-
-        RuleFor(r => r.PageSize)
+        RuleFor(r => r.Limit)
             .InclusiveBetween(1, 200);
+
+        RuleFor(r => r.Cursor)
+            .Must(cursor => cursor == null || cursor != Guid.Empty)
+            .WithMessage("Cursor must be null or a non-empty GUID");
 
         RuleForEach(r => r.Filters)
             .Custom((filter, ctx) =>
