@@ -16,7 +16,7 @@
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReadmeFile>../README.md</PackageReadmeFile>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
   </PropertyGroup>
 
