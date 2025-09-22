@@ -52,6 +52,15 @@ public interface ICrudService<TDto, TCreateRequest, TUpdateRequest>
     Task<IEnumerable<TDto>> CreateRangeAsync(Guid userId, IEnumerable<TCreateRequest> createRequests, CancellationToken ct = default);
 
     /// <summary>
+    /// Creates a new entity from the create request if an entity with the specified ID does not already exist
+    /// </summary>
+    /// <param name="id">The entity identifier to check for existence</param>
+    /// <param name="createRequest">The create request</param>
+    /// <param name="ct">A token to cancel the operation</param>
+    /// <returns>The created DTO if the entity did not exist, otherwise throws an exception</returns>
+    Task<TDto> CreateIfNotExistAsync(Guid id, TCreateRequest createRequest, CancellationToken ct = default);
+
+    /// <summary>
     /// Updates an existing entity with the update request
     /// </summary>
     /// <param name="userId">The user identifier performing the operation</param>

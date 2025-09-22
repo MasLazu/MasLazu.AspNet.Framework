@@ -86,6 +86,23 @@ public abstract class CrudService<TEntity, TDto, TCreateRequest, TUpdateRequest>
         return createdEntity.Adapt<TDto>();
     }
 
+    public virtual async Task<TDto> CreateIfNotExistAsync(Guid id, TCreateRequest createRequest, CancellationToken ct = default)
+    {
+        await ValidateAsync(createRequest, CreateValidator, ct);
+
+        TEntity? existingEntity = await Repository.GetByIdAsync(id, ct);
+        if (existingEntity != null)
+        {
+            return existingEntity.Adapt<TDto>();
+        }
+
+        TEntity entity = createRequest.Adapt<TEntity>();
+        TEntity createdEntity = await Repository.AddAsync(entity, ct);
+        await UnitOfWork.SaveChangesAsync(ct);
+
+        return createdEntity.Adapt<TDto>();
+    }
+
     public virtual async Task<IEnumerable<TDto>> CreateRangeAsync(Guid userId, IEnumerable<TCreateRequest> createRequests, CancellationToken ct = default)
     {
         var requestList = createRequests.ToList();
