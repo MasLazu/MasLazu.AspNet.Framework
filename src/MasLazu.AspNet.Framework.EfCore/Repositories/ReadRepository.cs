@@ -162,4 +162,28 @@ public class ReadRepository<T, TContext> : IReadRepository<T>
 
         return (items.Take(request.Limit).ToList(), nextCursor);
     }
+
+    public virtual async Task<IEnumerable<TimeseriesDataPoint>> GetTimeseriesCountAsync(TimeRange timeRange, TimeSpan interval, Expression<Func<T, bool>>? predicate = null, CancellationToken ct = default)
+    {
+        IQueryable<T> query = _dbSet
+            .Where(e => e.DeletedAt == null && e.CreatedAt >= timeRange.Start && e.CreatedAt <= timeRange.End);
+
+        if (predicate != null)
+        {
+            query = query.Where(predicate);
+        }
+
+        List<T> entities = await query.ToListAsync(ct);
+
+        IOrderedEnumerable<TimeseriesDataPoint> result = entities
+            .GroupBy(e =>
+            {
+                long bucketTicks = e.CreatedAt.Ticks / interval.Ticks * interval.Ticks;
+                return new DateTimeOffset(bucketTicks, e.CreatedAt.Offset);
+            })
+            .Select(g => new TimeseriesDataPoint { Date = g.Key, Count = g.Count() })
+            .OrderBy(x => x.Date);
+
+        return result;
+    }
 }

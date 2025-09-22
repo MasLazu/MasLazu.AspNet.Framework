@@ -2,8 +2,6 @@ using System.Linq.Expressions;
 using MasLazu.AspNet.Framework.Application.Models;
 using MasLazu.AspNet.Framework.Domain.Entities;
 
-namespace MasLazu.AspNet.Framework.Application.Interfaces;
-
 /// <summary>
 /// ReadRepository interface providing common read access operations
 /// </summary>
@@ -122,4 +120,14 @@ public interface IReadRepository<T> where T : BaseEntity
     /// <param name="ct">A token to cancel the operation</param>
     /// <returns>The count of matching entities</returns>
     Task<int> CountAsync(Expression<Func<T, bool>> predicate, CancellationToken ct = default);
+
+    /// <summary>
+    /// Gets the timeseries count of entities within the specified time range, grouped by the sample period
+    /// </summary>
+    /// <param name="timeRange">The time range to query</param>
+    /// <param name="interval">The sampling period (e.g., TimeSpan.FromHours(1) for hourly)</param>
+    /// <param name="predicate">Optional predicate to filter entities</param>
+    /// <param name="ct">A token to cancel the operation</param>
+    /// <returns>A collection of timeseries data points containing the date and count for each period</returns>
+    Task<IEnumerable<TimeseriesDataPoint>> GetTimeseriesCountAsync(TimeRange timeRange, TimeSpan interval, Expression<Func<T, bool>>? predicate = null, CancellationToken ct = default);
 }
