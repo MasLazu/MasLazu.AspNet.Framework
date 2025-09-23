@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MasLazu.AspNet.Framework.EfCore.Data;
 using MasLazu.AspNet.Framework.EfCore.Extensions;
 
-namespace MasLazu.AspNet.Framework.Psql.Extensions;
+namespace MasLazu.AspNet.Framework.EfCore.Postgresql.Extensions;
 
 /// <summary>
 /// Extension methods for automatically registering all DbContext and ReadDbContext types with PostgreSQL provider.
@@ -20,7 +20,7 @@ public static class PsqlAutoRegistrationExtensions
     /// <param name="assemblies">The assemblies to scan for DbContext types. If not provided, scans all loaded assemblies.</param>
     /// <param name="lifetime">The lifetime of the DbContext services.</param>
     /// <returns>The service collection.</returns>
-    public static IServiceCollection AddAllPsqlDbContexts(
+    public static IServiceCollection AddAllPsqlReadWriteDbContexts(
         this IServiceCollection services,
         IConfiguration configuration,
         Assembly[]? assemblies = null,
@@ -87,13 +87,13 @@ public static class PsqlAutoRegistrationExtensions
     /// <param name="assemblies">The assemblies to scan for DbContext types. If not provided, scans all loaded assemblies.</param>
     /// <param name="lifetime">The lifetime of the DbContext services.</param>
     /// <returns>The service collection.</returns>
-    public static IServiceCollection AddAllPsqlContexts(
+    public static IServiceCollection AddAllPsqlDbContexts(
         this IServiceCollection services,
         IConfiguration configuration,
         Assembly[]? assemblies = null,
         ServiceLifetime lifetime = ServiceLifetime.Scoped)
     {
-        services.AddAllPsqlDbContexts(configuration, assemblies, lifetime);
+        services.AddAllPsqlReadWriteDbContexts(configuration, assemblies, lifetime);
         services.AddAllPsqlReadDbContexts(configuration, assemblies, lifetime);
 
         return services;
@@ -117,7 +117,7 @@ public static class PsqlAutoRegistrationExtensions
             .Select(name => Assembly.Load(name))
             .ToArray();
 
-        return services.AddAllPsqlContexts(configuration, assemblies, lifetime);
+        return services.AddAllPsqlDbContexts(configuration, assemblies, lifetime);
     }
 
     private static void RegisterDbContext(
