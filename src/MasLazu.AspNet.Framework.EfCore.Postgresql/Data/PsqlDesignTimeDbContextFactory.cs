@@ -1,3 +1,4 @@
+using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using MasLazu.AspNet.Framework.EfCore.Data;
 
@@ -20,7 +21,7 @@ public class PsqlDesignTimeDbContextFactory<TDbContext> : DesignTimeDbContextFac
         optionsBuilder.UseNpgsql(connectionString, options =>
         {
             options.EnableRetryOnFailure();
-            options.MigrationsAssembly("Yole.AspNet.Example.Migrator");
+            options.MigrationsAssembly(Assembly.GetEntryAssembly()?.GetName().Name);
         });
         optionsBuilder.UseSnakeCaseNamingConvention();
     }
