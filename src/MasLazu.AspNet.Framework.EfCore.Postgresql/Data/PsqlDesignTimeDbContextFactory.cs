@@ -8,7 +8,7 @@ namespace MasLazu.AspNet.Framework.EfCore.Postgresql.Data;
 /// PostgreSQL-specific design-time factory for creating DbContext instances during EF Core design-time operations.
 /// </summary>
 /// <typeparam name="TDbContext">The type of DbContext to create</typeparam>
-public class PsqlDesignTimeDbContextFactory<TDbContext> : DesignTimeDbContextFactory<TDbContext>
+public abstract class PsqlDesignTimeDbContextFactory<TDbContext> : DesignTimeDbContextFactory<TDbContext>
     where TDbContext : BaseDbContext
 {
     /// <summary>
@@ -21,8 +21,10 @@ public class PsqlDesignTimeDbContextFactory<TDbContext> : DesignTimeDbContextFac
         optionsBuilder.UseNpgsql(connectionString, options =>
         {
             options.EnableRetryOnFailure();
-            options.MigrationsAssembly(Assembly.GetEntryAssembly()?.GetName().Name);
+            options.MigrationsAssembly(GetMigrationsAssemblyName());
         });
         optionsBuilder.UseSnakeCaseNamingConvention();
     }
+
+    public abstract string GetMigrationsAssemblyName();
 }
