@@ -75,18 +75,22 @@ public abstract class CrudService<TEntity, TDto, TCreateRequest, TUpdateRequest>
         return entities.Adapt<IEnumerable<TDto>>();
     }
 
-    public virtual async Task<TDto> CreateAsync(Guid userId, TCreateRequest createRequest, CancellationToken ct = default)
+    public virtual async Task<TDto> CreateAsync(Guid userId, TCreateRequest createRequest, bool saveChanges = true, CancellationToken ct = default)
     {
         await ValidateAsync(createRequest, CreateValidator, ct);
 
         TEntity entity = createRequest.Adapt<TEntity>();
         TEntity createdEntity = await Repository.AddAsync(entity, ct);
-        await UnitOfWork.SaveChangesAsync(ct);
+
+        if (saveChanges)
+        {
+            await UnitOfWork.SaveChangesAsync(ct);
+        }
 
         return createdEntity.Adapt<TDto>();
     }
 
-    public virtual async Task<TDto> CreateIfNotExistAsync(Guid id, TCreateRequest createRequest, CancellationToken ct = default)
+    public virtual async Task<TDto> CreateIfNotExistAsync(Guid id, TCreateRequest createRequest, bool saveChanges = true, CancellationToken ct = default)
     {
         await ValidateAsync(createRequest, CreateValidator, ct);
 
@@ -98,12 +102,16 @@ public abstract class CrudService<TEntity, TDto, TCreateRequest, TUpdateRequest>
 
         TEntity entity = createRequest.Adapt<TEntity>();
         TEntity createdEntity = await Repository.AddAsync(entity, ct);
-        await UnitOfWork.SaveChangesAsync(ct);
+
+        if (saveChanges)
+        {
+            await UnitOfWork.SaveChangesAsync(ct);
+        }
 
         return createdEntity.Adapt<TDto>();
     }
 
-    public virtual async Task<IEnumerable<TDto>> CreateRangeAsync(Guid userId, IEnumerable<TCreateRequest> createRequests, CancellationToken ct = default)
+    public virtual async Task<IEnumerable<TDto>> CreateRangeAsync(Guid userId, IEnumerable<TCreateRequest> createRequests, bool saveChanges = true, CancellationToken ct = default)
     {
         var requestList = createRequests.ToList();
 
@@ -114,12 +122,16 @@ public abstract class CrudService<TEntity, TDto, TCreateRequest, TUpdateRequest>
 
         List<TEntity> entities = requestList.Adapt<List<TEntity>>();
         IEnumerable<TEntity> createdEntities = await Repository.AddRangeAsync(entities, ct);
-        await UnitOfWork.SaveChangesAsync(ct);
+
+        if (saveChanges)
+        {
+            await UnitOfWork.SaveChangesAsync(ct);
+        }
 
         return createdEntities.Adapt<IEnumerable<TDto>>();
     }
 
-    public virtual async Task<TDto> UpdateAsync(Guid userId, TUpdateRequest updateRequest, CancellationToken ct = default)
+    public virtual async Task<TDto> UpdateAsync(Guid userId, TUpdateRequest updateRequest, bool saveChanges = true, CancellationToken ct = default)
     {
         TEntity? existingEntity = await Repository.GetByIdAsync(updateRequest.Id, ct) ??
             throw new NotFoundException(typeof(TEntity).Name, updateRequest.Id);
@@ -130,12 +142,16 @@ public abstract class CrudService<TEntity, TDto, TCreateRequest, TUpdateRequest>
         updatedEntity.UpdatedAt = DateTimeOffset.UtcNow;
 
         await Repository.UpdateAsync(updatedEntity, ct);
-        await UnitOfWork.SaveChangesAsync(ct);
+
+        if (saveChanges)
+        {
+            await UnitOfWork.SaveChangesAsync(ct);
+        }
 
         return updatedEntity.Adapt<TDto>();
     }
 
-    public virtual async Task<IEnumerable<TDto>> UpdateRangeAsync(Guid userId, IEnumerable<TUpdateRequest> updateRequests, CancellationToken ct = default)
+    public virtual async Task<IEnumerable<TDto>> UpdateRangeAsync(Guid userId, IEnumerable<TUpdateRequest> updateRequests, bool saveChanges = true, CancellationToken ct = default)
     {
         var requestList = updateRequests.ToList();
         var ids = requestList.Select(r => r.Id).ToList();
@@ -159,12 +175,16 @@ public abstract class CrudService<TEntity, TDto, TCreateRequest, TUpdateRequest>
         }
 
         await Repository.UpdateRangeAsync(updatedEntities, ct);
-        await UnitOfWork.SaveChangesAsync(ct);
+
+        if (saveChanges)
+        {
+            await UnitOfWork.SaveChangesAsync(ct);
+        }
 
         return updatedEntities.Adapt<IEnumerable<TDto>>();
     }
 
-    public virtual async Task DeleteAsync(Guid userId, Guid id, CancellationToken ct = default)
+    public virtual async Task DeleteAsync(Guid userId, Guid id, bool saveChanges = true, CancellationToken ct = default)
     {
         TEntity? entity = await Repository.GetByIdAsync(id, ct) ??
             throw new NotFoundException(typeof(TEntity).Name, id);
@@ -173,7 +193,7 @@ public abstract class CrudService<TEntity, TDto, TCreateRequest, TUpdateRequest>
         await UnitOfWork.SaveChangesAsync(ct);
     }
 
-    public virtual async Task DeleteRangeAsync(Guid userId, IEnumerable<Guid> ids, CancellationToken ct = default)
+    public virtual async Task DeleteRangeAsync(Guid userId, IEnumerable<Guid> ids, bool saveChanges = true, CancellationToken ct = default)
     {
         var idList = ids.ToList();
 
@@ -187,7 +207,11 @@ public abstract class CrudService<TEntity, TDto, TCreateRequest, TUpdateRequest>
         }
 
         await Repository.DeleteRangeAsync(entities, ct);
-        await UnitOfWork.SaveChangesAsync(ct);
+
+        if (saveChanges)
+        {
+            await UnitOfWork.SaveChangesAsync(ct);
+        }
     }
 
     public virtual async Task<bool> ExistsAsync(Guid userId, Guid id, CancellationToken ct = default)

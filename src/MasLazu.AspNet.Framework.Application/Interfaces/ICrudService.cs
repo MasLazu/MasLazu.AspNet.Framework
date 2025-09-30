@@ -40,7 +40,7 @@ public interface ICrudService<TDto, TCreateRequest, TUpdateRequest>
     /// <param name="createRequest">The create request</param>
     /// <param name="ct">A token to cancel the operation</param>
     /// <returns>The created DTO</returns>
-    Task<TDto> CreateAsync(Guid userId, TCreateRequest createRequest, CancellationToken ct = default);
+    Task<TDto> CreateAsync(Guid userId, TCreateRequest createRequest, bool saveChanges = true, CancellationToken ct = default);
 
     /// <summary>
     /// Creates multiple entities from the create requests
@@ -49,7 +49,7 @@ public interface ICrudService<TDto, TCreateRequest, TUpdateRequest>
     /// <param name="createRequests">The create requests</param>
     /// <param name="ct">A token to cancel the operation</param>
     /// <returns>The created DTOs</returns>
-    Task<IEnumerable<TDto>> CreateRangeAsync(Guid userId, IEnumerable<TCreateRequest> createRequests, CancellationToken ct = default);
+    Task<IEnumerable<TDto>> CreateRangeAsync(Guid userId, IEnumerable<TCreateRequest> createRequests, bool saveChanges = true, CancellationToken ct = default);
 
     /// <summary>
     /// Creates a new entity from the create request if an entity with the specified ID does not already exist
@@ -58,7 +58,7 @@ public interface ICrudService<TDto, TCreateRequest, TUpdateRequest>
     /// <param name="createRequest">The create request</param>
     /// <param name="ct">A token to cancel the operation</param>
     /// <returns>The created DTO if the entity did not exist, otherwise throws an exception</returns>
-    Task<TDto> CreateIfNotExistAsync(Guid id, TCreateRequest createRequest, CancellationToken ct = default);
+    Task<TDto> CreateIfNotExistAsync(Guid id, TCreateRequest createRequest, bool saveChanges = true, CancellationToken ct = default);
 
     /// <summary>
     /// Updates an existing entity with the update request
@@ -67,7 +67,7 @@ public interface ICrudService<TDto, TCreateRequest, TUpdateRequest>
     /// <param name="updateRequest">The update request</param>
     /// <param name="ct">A token to cancel the operation</param>
     /// <returns>The updated DTO</returns>
-    Task<TDto> UpdateAsync(Guid userId, TUpdateRequest updateRequest, CancellationToken ct = default);
+    Task<TDto> UpdateAsync(Guid userId, TUpdateRequest updateRequest, bool saveChanges = true, CancellationToken ct = default);
 
     /// <summary>
     /// Updates multiple entities with the update requests
@@ -76,7 +76,7 @@ public interface ICrudService<TDto, TCreateRequest, TUpdateRequest>
     /// <param name="updateRequests">The update requests</param>
     /// <param name="ct">A token to cancel the operation</param>
     /// <returns>The updated DTOs</returns>
-    Task<IEnumerable<TDto>> UpdateRangeAsync(Guid userId, IEnumerable<TUpdateRequest> updateRequests, CancellationToken ct = default);
+    Task<IEnumerable<TDto>> UpdateRangeAsync(Guid userId, IEnumerable<TUpdateRequest> updateRequests, bool saveChanges = true, CancellationToken ct = default);
 
     /// <summary>
     /// Deletes an entity by its identifier
@@ -85,7 +85,7 @@ public interface ICrudService<TDto, TCreateRequest, TUpdateRequest>
     /// <param name="id">The entity identifier</param>
     /// <param name="ct">A token to cancel the operation</param>
     /// <returns>A task representing the asynchronous operation</returns>
-    Task DeleteAsync(Guid userId, Guid id, CancellationToken ct = default);
+    Task DeleteAsync(Guid userId, Guid id, bool saveChanges = true, CancellationToken ct = default);
 
     /// <summary>
     /// Deletes multiple entities by their identifiers
@@ -94,7 +94,7 @@ public interface ICrudService<TDto, TCreateRequest, TUpdateRequest>
     /// <param name="ids">The entity identifiers</param>
     /// <param name="ct">A token to cancel the operation</param>
     /// <returns>A task representing the asynchronous operation</returns>
-    Task DeleteRangeAsync(Guid userId, IEnumerable<Guid> ids, CancellationToken ct = default);
+    Task DeleteRangeAsync(Guid userId, IEnumerable<Guid> ids, bool saveChanges = true, CancellationToken ct = default);
 
     // Utility operations
 
