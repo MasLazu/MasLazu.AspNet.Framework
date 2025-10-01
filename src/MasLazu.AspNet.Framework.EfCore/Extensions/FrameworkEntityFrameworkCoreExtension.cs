@@ -5,9 +5,9 @@ using MasLazu.AspNet.Framework.EfCore.Repositories;
 
 namespace MasLazu.AspNet.Framework.EfCore.Extensions;
 
-public static class FrameworkEntityFrameworkCoreExtension
+public static class FrameworkEfCoreExtension
 {
-    public static IServiceCollection AddFrameworkEntityFrameworkCore(this IServiceCollection services)
+    public static IServiceCollection AddFrameworkEfCore(this IServiceCollection services)
     {
         services.AddScoped<IUnitOfWork, SharedTransactionUnitOfWork>();
 
