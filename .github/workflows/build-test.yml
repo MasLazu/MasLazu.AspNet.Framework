@@ -34,7 +34,43 @@ jobs:
         run: dotnet build --configuration ${{ env.CONFIGURATION }} --no-restore
 
       - name: Run unit tests
-        run: dotnet test --configuration ${{ env.CONFIGURATION }} --no-build --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./TestResults
+        run: dotnet test --configuration ${{ env.CONFIGURATION }} --no-build --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./TestResults --logger "trx;LogFileName=test-results.trx" || true
+
+      - name: Check test results
+        run: |
+          echo "Checking test results..."
+
+          # Find all TRX files
+          TRX_FILES=$(find ./TestResults -name "*.trx" 2>/dev/null || echo "")
+
+          if [ -z "$TRX_FILES" ]; then
+            echo "❌ No test result files found!"
+            exit 1
+          fi
+
+          # Check for test failures in TRX files
+          FAILED_TESTS=0
+          TOTAL_TESTS=0
+
+          for trx in $TRX_FILES; do
+            if grep -q 'outcome="Failed"' "$trx" 2>/dev/null; then
+              FAILED_TESTS=$((FAILED_TESTS + 1))
+              echo "❌ Found failed tests in: $trx"
+            fi
+            
+            # Count total tests
+            TEST_COUNT=$(grep -o 'outcome="' "$trx" 2>/dev/null | wc -l)
+            TOTAL_TESTS=$((TOTAL_TESTS + TEST_COUNT))
+          done
+
+          echo "Total tests executed: $TOTAL_TESTS"
+
+          if [ $FAILED_TESTS -gt 0 ]; then
+            echo "❌ $FAILED_TESTS test file(s) contain failures!"
+            exit 1
+          else
+            echo "✅ All tests passed!"
+          fi
 
       - name: Generate code coverage report
         uses: danielpalme/ReportGenerator-GitHub-Action@5.3.11

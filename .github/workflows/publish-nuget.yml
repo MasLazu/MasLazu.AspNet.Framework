@@ -60,16 +60,36 @@ jobs:
         if: ${{ github.event.inputs.skip_tests != 'true' }}
         run: |
           echo "🧪 Running unit tests..."
-          dotnet test --configuration ${{ env.CONFIGURATION }} --no-build --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./TestResults
+          dotnet test --configuration ${{ env.CONFIGURATION }} --no-build --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./TestResults --logger "trx;LogFileName=test-results.trx" || true
 
       - name: Check test results
         if: ${{ github.event.inputs.skip_tests != 'true' }}
         run: |
-          if [ $? -eq 0 ]; then
-            echo "✅ All tests passed successfully!"
-          else
+          echo "Checking test results..."
+
+          # Find all TRX files
+          TRX_FILES=$(find ./TestResults -name "*.trx" 2>/dev/null || echo "")
+
+          if [ -z "$TRX_FILES" ]; then
+            echo "❌ No test result files found!"
+            exit 1
+          fi
+
+          # Check for test failures in TRX files
+          FAILED_TESTS=0
+
+          for trx in $TRX_FILES; do
+            if grep -q 'outcome="Failed"' "$trx" 2>/dev/null; then
+              FAILED_TESTS=$((FAILED_TESTS + 1))
+              echo "❌ Found failed tests in: $trx"
+            fi
+          done
+
+          if [ $FAILED_TESTS -gt 0 ]; then
             echo "❌ Tests failed! Aborting publish."
             exit 1
+          else
+            echo "✅ All tests passed successfully!"
           fi
 
       - name: Pack packages
