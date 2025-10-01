@@ -2,132 +2,149 @@ name: Publish to NuGet
 
 on:
   release:
-    types: [published, prereleased]
+    types: [published]
   workflow_dispatch:
     inputs:
       version:
-        description: 'Package version to publish'
+        description: "Package version to publish"
         required: true
-        default: '1.0.0'
+        default: "1.0.0"
+      skip_tests:
+        description: "Skip running tests"
+        required: false
+        type: boolean
+        default: false
 
 env:
-  DOTNET_VERSION: '9.0.x'
-  CONFIGURATION: 'Release'
+  DOTNET_VERSION: "9.0.x"
+  CONFIGURATION: "Release"
 
 jobs:
-  publish:
-    name: Publish NuGet Packages
+  build-test-publish:
+    name: Build, Test, and Publish NuGet Packages
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: ${{ env.DOTNET_VERSION }}
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
 
-    - name: Restore dependencies
-      run: dotnet restore
+      - name: Get version from release or input
+        id: get-version
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            # Remove 'v' prefix from tag name
+            VERSION="${{ github.event.release.tag_name }}"
+            VERSION="${VERSION#v}"
+          else
+            VERSION="${{ github.event.inputs.version }}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Using version: $VERSION"
 
-    - name: Build solution
-      run: dotnet build --configuration ${{ env.CONFIGURATION }} --no-restore
+      - name: Restore dependencies
+        run: dotnet restore
 
-    - name: Get version from release or input
-      id: get-version
-      run: |
-        if [ "${{ github.event_name }}" = "release" ]; then
-          # Remove 'v' prefix from tag name
-          VERSION="${{ github.event.release.tag_name }}"
-          VERSION="${VERSION#v}"
-        else
-          VERSION="${{ github.event.inputs.version }}"
-        fi
-        echo "version=$VERSION" >> $GITHUB_OUTPUT
-        echo "Using version: $VERSION"
+      - name: Build solution
+        run: |
+          echo "🔨 Building solution..."
+          dotnet build --configuration ${{ env.CONFIGURATION }} --no-restore /p:Version=${{ steps.get-version.outputs.version }}
 
-    - name: Pack Domain package
-      run: |
-        cd src/MasLazu.AspNet.Framework.Domain
-        dotnet pack --configuration ${{ env.CONFIGURATION }} --no-build --output ${{ github.workspace }}/nupkgs /p:PackageVersion=${{ steps.get-version.outputs.version }}
+      - name: Run unit tests
+        if: ${{ github.event.inputs.skip_tests != 'true' }}
+        run: |
+          echo "🧪 Running unit tests..."
+          dotnet test --configuration ${{ env.CONFIGURATION }} --no-build --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./TestResults
 
-    - name: Pack Application package
-      run: |
-        cd src/MasLazu.AspNet.Framework.Application
-        dotnet pack --configuration ${{ env.CONFIGURATION }} --no-build --output ${{ github.workspace }}/nupkgs /p:PackageVersion=${{ steps.get-version.outputs.version }}
+      - name: Check test results
+        if: ${{ github.event.inputs.skip_tests != 'true' }}
+        run: |
+          if [ $? -eq 0 ]; then
+            echo "✅ All tests passed successfully!"
+          else
+            echo "❌ Tests failed! Aborting publish."
+            exit 1
+          fi
 
-    - name: Pack EfCore package
-      run: |
-        cd src/MasLazu.AspNet.Framework.EfCore
-        dotnet pack --configuration ${{ env.CONFIGURATION }} --no-build --output ${{ github.workspace }}/nupkgs /p:PackageVersion=${{ steps.get-version.outputs.version }}
+      - name: Pack packages
+        run: |
+          echo "📦 Packing NuGet packages..."
+          mkdir -p ${{ github.workspace }}/nupkgs
 
-    - name: Pack EfCore.Postgresql package
-      run: |
-        cd src/MasLazu.AspNet.Framework.EfCore.Postgresql
-        dotnet pack --configuration ${{ env.CONFIGURATION }} --no-build --output ${{ github.workspace }}/nupkgs /p:PackageVersion=${{ steps.get-version.outputs.version }}
+          dotnet pack src/MasLazu.AspNet.Framework.Domain/MasLazu.AspNet.Framework.Domain.csproj \
+            --configuration ${{ env.CONFIGURATION }} --no-build --output ${{ github.workspace }}/nupkgs \
+            /p:PackageVersion=${{ steps.get-version.outputs.version }}
 
-    - name: Pack Endpoint package
-      run: |
-        cd src/MasLazu.AspNet.Framework.Endpoint
-        dotnet pack --configuration ${{ env.CONFIGURATION }} --no-build --output ${{ github.workspace }}/nupkgs /p:PackageVersion=${{ steps.get-version.outputs.version }}
+          dotnet pack src/MasLazu.AspNet.Framework.Application/MasLazu.AspNet.Framework.Application.csproj \
+            --configuration ${{ env.CONFIGURATION }} --no-build --output ${{ github.workspace }}/nupkgs \
+            /p:PackageVersion=${{ steps.get-version.outputs.version }}
 
-    - name: List created packages
-      run: ls -la ${{ github.workspace }}/nupkgs/
+          dotnet pack src/MasLazu.AspNet.Framework.EfCore/MasLazu.AspNet.Framework.EfCore.csproj \
+            --configuration ${{ env.CONFIGURATION }} --no-build --output ${{ github.workspace }}/nupkgs \
+            /p:PackageVersion=${{ steps.get-version.outputs.version }}
 
-    - name: Publish Domain package to NuGet
-      run: dotnet nuget push ${{ github.workspace }}/nupkgs/MasLazu.AspNet.Framework.Domain.${{ steps.get-version.outputs.version }}.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+          dotnet pack src/MasLazu.AspNet.Framework.EfCore.Postgresql/MasLazu.AspNet.Framework.EfCore.Postgresql.csproj \
+            --configuration ${{ env.CONFIGURATION }} --no-build --output ${{ github.workspace }}/nupkgs \
+            /p:PackageVersion=${{ steps.get-version.outputs.version }}
 
-    - name: Publish Application package to NuGet
-      run: dotnet nuget push ${{ github.workspace }}/nupkgs/MasLazu.AspNet.Framework.Application.${{ steps.get-version.outputs.version }}.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+          dotnet pack src/MasLazu.AspNet.Framework.Endpoint/MasLazu.AspNet.Framework.Endpoint.csproj \
+            --configuration ${{ env.CONFIGURATION }} --no-build --output ${{ github.workspace }}/nupkgs \
+            /p:PackageVersion=${{ steps.get-version.outputs.version }}
 
-    - name: Publish EfCore package to NuGet
-      run: dotnet nuget push ${{ github.workspace }}/nupkgs/MasLazu.AspNet.Framework.EfCore.${{ steps.get-version.outputs.version }}.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+      - name: List created packages
+        run: |
+          echo "📋 Created packages:"
+          ls -lh ${{ github.workspace }}/nupkgs/
 
-    - name: Publish EfCore.Postgresql package to NuGet
-      run: dotnet nuget push ${{ github.workspace }}/nupkgs/MasLazu.AspNet.Framework.EfCore.Postgresql.${{ steps.get-version.outputs.version }}.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+      - name: Publish packages to NuGet
+        run: |
+          echo "🚀 Publishing packages to NuGet..."
 
-    - name: Publish Endpoint package to NuGet
-      run: dotnet nuget push ${{ github.workspace }}/nupkgs/MasLazu.AspNet.Framework.Endpoint.${{ steps.get-version.outputs.version }}.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+          for pkg in ${{ github.workspace }}/nupkgs/*.nupkg; do
+            echo "Publishing: $(basename $pkg)"
+            dotnet nuget push "$pkg" \
+              --api-key ${{ secrets.NUGET_API_KEY }} \
+              --source https://api.nuget.org/v3/index.json \
+              --skip-duplicate || echo "⚠️ Package already exists or failed to publish: $(basename $pkg)"
+          done
 
-    - name: Create GitHub release notes
-      if: github.event_name == 'workflow_dispatch'
-      uses: actions/github-script@v7
-      with:
-        script: |
-          const version = '${{ steps.get-version.outputs.version }}';
-          const packages = [
-            'MasLazu.AspNet.Framework.Domain',
-            'MasLazu.AspNet.Framework.Application',
-            'MasLazu.AspNet.Framework.EfCore',
-            'MasLazu.AspNet.Framework.EfCore.Postgresql',
-            'MasLazu.AspNet.Framework.Endpoint'
-          ];
+          echo "✅ NuGet publish completed!"
 
-          let body = `## 🚀 Release ${version}\n\n`;
-          body += '### 📦 Published Packages\n\n';
-          packages.forEach(pkg => {
-            body += `- \`${pkg}\` v${version}\n`;
-          });
-          body += '\n### 🔗 Installation\n\n';
-          body += '```bash\n';
-          packages.forEach(pkg => {
-            body += `dotnet add package ${pkg} --version ${version}\n`;
-          });
-          body += '```\n\n';
-          body += '### 📋 Changes\n\n';
-          body += 'See the changelog for details about this release.\n\n';
-          body += '---\n\n';
-          body += '*This release was automatically published by GitHub Actions.*';
+      - name: Upload packages as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-packages
+          path: ${{ github.workspace }}/nupkgs/*.nupkg
+          retention-days: 90
 
-          github.rest.repos.createRelease({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            tag_name: `v${version}`,
-            name: `Release ${version}`,
-            body: body,
-            draft: false,
-            prerelease: version.includes('beta') || version.includes('alpha') || version.includes('rc') || version.includes('preview')
-          });
+      - name: Create release summary
+        run: |
+          echo "## 🎉 Release Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Version: \`${{ steps.get-version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📚 Published Packages:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Package | Version |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|---------|" >> $GITHUB_STEP_SUMMARY
+          echo "| MasLazu.AspNet.Framework.Domain | ${{ steps.get-version.outputs.version }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| MasLazu.AspNet.Framework.Application | ${{ steps.get-version.outputs.version }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| MasLazu.AspNet.Framework.EfCore | ${{ steps.get-version.outputs.version }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| MasLazu.AspNet.Framework.EfCore.Postgresql | ${{ steps.get-version.outputs.version }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| MasLazu.AspNet.Framework.Endpoint | ${{ steps.get-version.outputs.version }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔗 Installation:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "dotnet add package MasLazu.AspNet.Framework.Domain --version ${{ steps.get-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "dotnet add package MasLazu.AspNet.Framework.Application --version ${{ steps.get-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "dotnet add package MasLazu.AspNet.Framework.EfCore --version ${{ steps.get-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "dotnet add package MasLazu.AspNet.Framework.EfCore.Postgresql --version ${{ steps.get-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "dotnet add package MasLazu.AspNet.Framework.Endpoint --version ${{ steps.get-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

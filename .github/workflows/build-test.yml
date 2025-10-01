@@ -2,12 +2,14 @@ name: Build and Test
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
+  workflow_dispatch:
 
 env:
-  DOTNET_VERSION: '9.0.x'
+  DOTNET_VERSION: "9.0.x"
+  CONFIGURATION: "Release"
 
 jobs:
   build-and-test:
@@ -15,16 +17,82 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Required for proper git history
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: ${{ env.DOTNET_VERSION }}
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
 
-    - name: Restore dependencies
-      run: dotnet restore
+      - name: Restore dependencies
+        run: dotnet restore
 
-    - name: Build solution
-      run: dotnet build --configuration Release --no-restore
+      - name: Build solution
+        run: dotnet build --configuration ${{ env.CONFIGURATION }} --no-restore
+
+      - name: Run unit tests
+        run: dotnet test --configuration ${{ env.CONFIGURATION }} --no-build --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./TestResults
+
+      - name: Generate code coverage report
+        uses: danielpalme/ReportGenerator-GitHub-Action@5.3.11
+        with:
+          reports: "./TestResults/**/coverage.cobertura.xml"
+          targetdir: "./CoverageReport"
+          reporttypes: "HtmlInline;Cobertura;MarkdownSummaryGithub"
+          assemblyfilters: "-xunit*;-*.Tests"
+
+      - name: Add coverage summary to PR
+        if: github.event_name == 'pull_request'
+        run: |
+          if [ -f ./CoverageReport/SummaryGithub.md ]; then
+            cat ./CoverageReport/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: ./CoverageReport
+          retention-days: 30
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: ./TestResults
+          retention-days: 30
+
+      - name: Check code coverage threshold
+        run: |
+          if [ -f ./CoverageReport/Cobertura.xml ]; then
+            # Extract line coverage percentage
+            LINE_COVERAGE=$(grep -oP 'line-rate="\K[0-9.]+' ./CoverageReport/Cobertura.xml | head -1)
+            LINE_COVERAGE_PERCENT=$(echo "$LINE_COVERAGE * 100" | bc)
+            echo "Line Coverage: ${LINE_COVERAGE_PERCENT}%"
+            
+            # Extract branch coverage percentage
+            BRANCH_COVERAGE=$(grep -oP 'branch-rate="\K[0-9.]+' ./CoverageReport/Cobertura.xml | head -1)
+            BRANCH_COVERAGE_PERCENT=$(echo "$BRANCH_COVERAGE * 100" | bc)
+            echo "Branch Coverage: ${BRANCH_COVERAGE_PERCENT}%"
+            
+            # Set thresholds (can be adjusted)
+            MIN_LINE_COVERAGE=80
+            MIN_BRANCH_COVERAGE=70
+            
+            # Check thresholds
+            if (( $(echo "$LINE_COVERAGE_PERCENT < $MIN_LINE_COVERAGE" | bc -l) )); then
+              echo "⚠️ Warning: Line coverage (${LINE_COVERAGE_PERCENT}%) is below threshold (${MIN_LINE_COVERAGE}%)"
+            else
+              echo "✅ Line coverage (${LINE_COVERAGE_PERCENT}%) meets threshold (${MIN_LINE_COVERAGE}%)"
+            fi
+            
+            if (( $(echo "$BRANCH_COVERAGE_PERCENT < $MIN_BRANCH_COVERAGE" | bc -l) )); then
+              echo "⚠️ Warning: Branch coverage (${BRANCH_COVERAGE_PERCENT}%) is below threshold (${MIN_BRANCH_COVERAGE}%)"
+            else
+              echo "✅ Branch coverage (${BRANCH_COVERAGE_PERCENT}%) meets threshold (${MIN_BRANCH_COVERAGE}%)"
+            fi
+          fi

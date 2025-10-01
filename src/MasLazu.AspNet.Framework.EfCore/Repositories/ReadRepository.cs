@@ -125,7 +125,9 @@ public class ReadRepository<T, TContext> : IReadRepository<T>
 
     public async virtual Task<(List<T>, int)> GetPaginatedAsync(PaginationRequest request, CancellationToken ct = default)
     {
-        IQueryable<T> query = _dbSet.AsQueryable();
+        IQueryable<T> query = _dbSet
+            .Where(e => e.DeletedAt == null)
+            .AsQueryable();
 
         query = _expressionBuilder.ApplyFilters(query, request.Filters);
         int totalCount = await query.CountAsync(ct);
@@ -139,7 +141,9 @@ public class ReadRepository<T, TContext> : IReadRepository<T>
 
     public async virtual Task<(List<T>, Guid?)> GetCursorPaginatedAsync(CursorPaginationRequest request, CancellationToken ct = default)
     {
-        IQueryable<T> query = _dbSet.AsQueryable();
+        IQueryable<T> query = _dbSet
+            .Where(e => e.DeletedAt == null)
+            .AsQueryable();
 
         query = _expressionBuilder.ApplyFilters(query, request.Filters);
 
