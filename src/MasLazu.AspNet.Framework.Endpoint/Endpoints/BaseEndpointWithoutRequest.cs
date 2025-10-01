@@ -2,6 +2,8 @@ using FastEndpoints;
 using Microsoft.AspNetCore.Identity.Data;
 using MasLazu.AspNet.Framework.Endpoint.EndpointGroups;
 using MasLazu.AspNet.Framework.Endpoint.Models;
+using System.Security.Claims;
+using MasLazu.AspNet.Framework.Application.Exceptions;
 
 namespace MasLazu.AspNet.Framework.Endpoint.Endpoints;
 
@@ -16,6 +18,17 @@ public abstract class BaseEndpointWithoutRequest<TResponse> :
         // Idempotency();
         // Group<V1EndpointGroup>();
         // EnableAntiforgery();
+    }
+
+    public Guid GetUserId()
+    {
+        Claim? userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out Guid userId))
+        {
+            throw new UnauthorizedException("User is not authenticated");
+        }
+
+        return userId;
     }
 
     public abstract void ConfigureEndpoint();
