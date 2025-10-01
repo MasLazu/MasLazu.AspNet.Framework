@@ -63,19 +63,19 @@ public abstract class CrudService<TEntity, TDto, TCreateRequest, TUpdateRequest>
         }
     }
 
-    public virtual async Task<TDto?> GetByIdAsync(Guid userId, Guid id, CancellationToken ct = default)
+    public virtual async Task<TDto?> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
         TEntity? entity = await ReadRepository.GetByIdAsync(id, ct);
         return entity.Adapt<TDto>();
     }
 
-    public virtual async Task<IEnumerable<TDto>> GetAllAsync(Guid userId, CancellationToken ct = default)
+    public virtual async Task<IEnumerable<TDto>> GetAllAsync(CancellationToken ct = default)
     {
         IEnumerable<TEntity> entities = await ReadRepository.GetAllAsync(ct);
         return entities.Adapt<IEnumerable<TDto>>();
     }
 
-    public virtual async Task<TDto> CreateAsync(Guid userId, TCreateRequest createRequest, bool saveChanges = true, CancellationToken ct = default)
+    public virtual async Task<TDto> CreateAsync(TCreateRequest createRequest, bool saveChanges = true, CancellationToken ct = default)
     {
         await ValidateAsync(createRequest, CreateValidator, ct);
 
@@ -111,7 +111,7 @@ public abstract class CrudService<TEntity, TDto, TCreateRequest, TUpdateRequest>
         return createdEntity.Adapt<TDto>();
     }
 
-    public virtual async Task<IEnumerable<TDto>> CreateRangeAsync(Guid userId, IEnumerable<TCreateRequest> createRequests, bool saveChanges = true, CancellationToken ct = default)
+    public virtual async Task<IEnumerable<TDto>> CreateRangeAsync(IEnumerable<TCreateRequest> createRequests, bool saveChanges = true, CancellationToken ct = default)
     {
         var requestList = createRequests.ToList();
 
@@ -131,7 +131,7 @@ public abstract class CrudService<TEntity, TDto, TCreateRequest, TUpdateRequest>
         return createdEntities.Adapt<IEnumerable<TDto>>();
     }
 
-    public virtual async Task<TDto> UpdateAsync(Guid userId, TUpdateRequest updateRequest, bool saveChanges = true, CancellationToken ct = default)
+    public virtual async Task<TDto> UpdateAsync(TUpdateRequest updateRequest, bool saveChanges = true, CancellationToken ct = default)
     {
         TEntity? existingEntity = await Repository.GetByIdAsync(updateRequest.Id, ct) ??
             throw new NotFoundException(typeof(TEntity).Name, updateRequest.Id);
@@ -151,7 +151,7 @@ public abstract class CrudService<TEntity, TDto, TCreateRequest, TUpdateRequest>
         return updatedEntity.Adapt<TDto>();
     }
 
-    public virtual async Task<IEnumerable<TDto>> UpdateRangeAsync(Guid userId, IEnumerable<TUpdateRequest> updateRequests, bool saveChanges = true, CancellationToken ct = default)
+    public virtual async Task<IEnumerable<TDto>> UpdateRangeAsync(IEnumerable<TUpdateRequest> updateRequests, bool saveChanges = true, CancellationToken ct = default)
     {
         var requestList = updateRequests.ToList();
         var ids = requestList.Select(r => r.Id).ToList();
@@ -184,7 +184,7 @@ public abstract class CrudService<TEntity, TDto, TCreateRequest, TUpdateRequest>
         return updatedEntities.Adapt<IEnumerable<TDto>>();
     }
 
-    public virtual async Task DeleteAsync(Guid userId, Guid id, bool saveChanges = true, CancellationToken ct = default)
+    public virtual async Task DeleteAsync(Guid id, bool saveChanges = true, CancellationToken ct = default)
     {
         TEntity? entity = await Repository.GetByIdAsync(id, ct) ??
             throw new NotFoundException(typeof(TEntity).Name, id);
@@ -193,7 +193,7 @@ public abstract class CrudService<TEntity, TDto, TCreateRequest, TUpdateRequest>
         await UnitOfWork.SaveChangesAsync(ct);
     }
 
-    public virtual async Task DeleteRangeAsync(Guid userId, IEnumerable<Guid> ids, bool saveChanges = true, CancellationToken ct = default)
+    public virtual async Task DeleteRangeAsync(IEnumerable<Guid> ids, bool saveChanges = true, CancellationToken ct = default)
     {
         var idList = ids.ToList();
 
@@ -214,17 +214,17 @@ public abstract class CrudService<TEntity, TDto, TCreateRequest, TUpdateRequest>
         }
     }
 
-    public virtual async Task<bool> ExistsAsync(Guid userId, Guid id, CancellationToken ct = default)
+    public virtual async Task<bool> ExistsAsync(Guid id, CancellationToken ct = default)
     {
         return await ReadRepository.ExistsAsync(id, ct);
     }
 
-    public virtual async Task<int> CountAsync(Guid userId, CancellationToken ct = default)
+    public virtual async Task<int> CountAsync(CancellationToken ct = default)
     {
         return await ReadRepository.CountAsync(ct);
     }
 
-    public async Task<PaginatedResult<TDto>> GetPaginatedAsync(Guid userId, PaginationRequest request, CancellationToken ct = default)
+    public async Task<PaginatedResult<TDto>> GetPaginatedAsync(PaginationRequest request, CancellationToken ct = default)
     {
         await ValidateAsync(request.Adapt<PaginationRequest<TEntity>>(), PaginationValidator, ct);
         (List<TEntity> entities, int count) = await ReadRepository.GetPaginatedAsync(request, ct);
@@ -237,7 +237,7 @@ public abstract class CrudService<TEntity, TDto, TCreateRequest, TUpdateRequest>
         };
     }
 
-    public async Task<CursorPaginatedResult<TDto>> GetCursorPaginatedAsync(Guid userId, CursorPaginationRequest request, CancellationToken ct = default)
+    public async Task<CursorPaginatedResult<TDto>> GetCursorPaginatedAsync(CursorPaginationRequest request, CancellationToken ct = default)
     {
         await ValidateAsync(request, CursorPaginationValidator, ct);
         (List<TEntity> entities, Guid? nextCursor) = await ReadRepository.GetCursorPaginatedAsync(request, ct);
