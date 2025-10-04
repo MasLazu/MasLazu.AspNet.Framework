@@ -4,19 +4,24 @@ using MasLazu.AspNet.Framework.Application.Interfaces;
 using MasLazu.AspNet.Framework.Domain.Entities;
 using System.Linq.Expressions;
 using System.Collections.Generic;
+using Microsoft.Extensions.Configuration;
 
 namespace MasLazu.AspNet.Framework.Application.Validators;
 
 public class PaginationRequestValidator<TEntity> : AbstractValidator<PaginationRequest<TEntity>>, IPaginationValidator<TEntity>
     where TEntity : BaseEntity
 {
-    public PaginationRequestValidator(IEntityPropertyMap<TEntity> propertyMap)
+    private readonly IConfiguration _configuration;
+
+    public PaginationRequestValidator(IEntityPropertyMap<TEntity> propertyMap, IConfiguration configuration)
     {
+        _configuration = configuration;
+
         RuleFor(r => r.Page)
             .GreaterThan(0);
 
         RuleFor(r => r.PageSize)
-            .InclusiveBetween(1, 200);
+            .InclusiveBetween(1, int.TryParse(_configuration["Pagination:MaxPageSize"], out int max) ? max : 200);
 
         RuleForEach(r => r.Filters)
             .Custom((filter, ctx) =>

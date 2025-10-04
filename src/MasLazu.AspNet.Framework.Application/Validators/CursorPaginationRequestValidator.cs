@@ -4,16 +4,21 @@ using MasLazu.AspNet.Framework.Application.Interfaces;
 using MasLazu.AspNet.Framework.Domain.Entities;
 using System.Linq.Expressions;
 using System.Collections.Generic;
+using Microsoft.Extensions.Configuration;
 
 namespace MasLazu.AspNet.Framework.Application.Validators;
 
 public class CursorPaginationRequestValidator<TEntity> : AbstractValidator<CursorPaginationRequest>, ICursorPaginationValidator<TEntity>
     where TEntity : BaseEntity
 {
-    public CursorPaginationRequestValidator(IEntityPropertyMap<TEntity> propertyMap)
+    private readonly IConfiguration _configuration;
+
+    public CursorPaginationRequestValidator(IEntityPropertyMap<TEntity> propertyMap, IConfiguration configuration)
     {
+        _configuration = configuration;
+
         RuleFor(r => r.Limit)
-            .InclusiveBetween(1, 200);
+            .InclusiveBetween(1, int.TryParse(_configuration["Pagination:MaxPageSize"], out int max) ? max : 200);
 
         RuleFor(r => r.Cursor)
             .Must(cursor => cursor == null || cursor != Guid.Empty)

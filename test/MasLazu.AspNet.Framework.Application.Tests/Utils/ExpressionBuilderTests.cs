@@ -39,10 +39,10 @@ public class ExpressionBuilderTests
 
         _testData = new List<TestEntity>
         {
-            new() { Name = "Alice", Age = 25, Price = 100.50m, IsActive = true, Status = TestStatus.Active },
-            new() { Name = "Bob", Age = 30, Price = 200.75m, IsActive = false, Status = TestStatus.Inactive },
-            new() { Name = "Charlie", Age = 35, Price = 150.25m, IsActive = true, Status = TestStatus.Pending },
-            new() { Name = "David", Age = 40, Price = 300.00m, IsActive = true, Status = TestStatus.Active }
+            new() { Id = Guid.Parse("00000000-0000-0000-0000-000000000001"), Name = "Alice", Age = 25, Price = 100.50m, IsActive = true, Status = TestStatus.Active },
+            new() { Id = Guid.Parse("00000000-0000-0000-0000-000000000002"), Name = "Bob", Age = 30, Price = 200.75m, IsActive = false, Status = TestStatus.Inactive },
+            new() { Id = Guid.Parse("00000000-0000-0000-0000-000000000003"), Name = "Charlie", Age = 35, Price = 150.25m, IsActive = true, Status = TestStatus.Pending },
+            new() { Id = Guid.Parse("00000000-0000-0000-0000-000000000004"), Name = "David", Age = 40, Price = 300.00m, IsActive = true, Status = TestStatus.Active }
         };
     }
 
@@ -383,7 +383,7 @@ public class ExpressionBuilderTests
 
         // Assert
         result.Should().NotBeEmpty();
-        result.Should().AllSatisfy(e => string.Compare(e.Id.ToString(), secondEntityId.ToString(), StringComparison.Ordinal).Should().BeGreaterThan(0));
+        result.Should().AllSatisfy(e => e.Id.CompareTo(secondEntityId).Should().BeGreaterThan(0));
     }
 
     [Fact]

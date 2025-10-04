@@ -7,6 +7,7 @@ using MasLazu.AspNet.Framework.Application.Models;
 using MasLazu.AspNet.Framework.Application.Validators;
 using MasLazu.AspNet.Framework.Domain.Entities;
 using Xunit;
+using Microsoft.Extensions.Configuration;
 
 namespace MasLazu.AspNet.Framework.Application.Tests.Validators;
 
@@ -29,12 +30,15 @@ public class PaginationRequestValidatorTests
     }
 
     private readonly Mock<IEntityPropertyMap<TestEntity>> _propertyMapMock;
+    private readonly Mock<IConfiguration> _configurationMock;
     private readonly PaginationRequestValidator<TestEntity> _validator;
 
     public PaginationRequestValidatorTests()
     {
         _propertyMapMock = new Mock<IEntityPropertyMap<TestEntity>>();
-        _validator = new PaginationRequestValidator<TestEntity>(_propertyMapMock.Object);
+        _configurationMock = new Mock<IConfiguration>();
+        _configurationMock.Setup(c => c["Pagination:MaxPageSize"]).Returns("200");
+        _validator = new PaginationRequestValidator<TestEntity>(_propertyMapMock.Object, _configurationMock.Object);
 
         // Setup property map for valid fields
         _propertyMapMock.Setup(m => m.Get("Name")).Returns(e => e.Name);
